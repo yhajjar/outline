@@ -5,13 +5,22 @@ services:
       - "127.0.0.1:3040:3040"
     env_file: .env
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
   redis:
     image: redis
     ports:
       - "127.0.0.1:6380:6379"
     user: "redis:redis"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   postgres:
     image: postgres
     ports:
@@ -21,3 +30,8 @@ services:
       POSTGRES_PASSWORD: pass
       POSTGRES_DB: outline
     user: "postgres:postgres"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d outline"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
