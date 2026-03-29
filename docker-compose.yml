@@ -1,4 +1,9 @@
 services:
+  outline:
+    build: .
+    ports:
+      - "127.0.0.1:3040:3040"
+    env_file: .env
   redis:
     image: redis
     ports:
