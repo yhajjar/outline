@@ -27,8 +27,9 @@ COPY --from=base --chown=nodejs:nodejs $APP_PATH/public ./public
 COPY --from=base --chown=nodejs:nodejs $APP_PATH/.sequelizerc ./.sequelizerc
 COPY --from=base --chown=nodejs:nodejs $APP_PATH/node_modules ./node_modules
 COPY --from=base --chown=nodejs:nodejs $APP_PATH/package.json ./package.json
-# Install wget to healthcheck the server
-RUN  apt-get update \
+
+# Install wget for healthcheck
+RUN apt-get update \
     && apt-get install -y wget \
     && rm -rf /var/lib/apt/lists/*
 
@@ -39,9 +40,14 @@ RUN mkdir -p "$FILE_STORAGE_LOCAL_ROOT_DIR" && \
 
 VOLUME /var/lib/outline/data
 
+# Copy and set entrypoint script
+COPY --chown=nodejs:nodejs docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 USER nodejs
 
-HEALTHCHECK --interval=1m CMD wget -qO- "http://localhost:${PORT:-3000}/_health" | grep -q "OK" || exit 1
+HEALTHCHECK --interval=1m CMD wget -qO- "http://localhost:${PORT:-3040}/_health" | grep -q "OK" || exit 1
 
-EXPOSE 3000
+EXPOSE 3040
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD ["node", "build/server/index.js"]
